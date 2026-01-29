@@ -1,55 +1,30 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from datetime import datetime
+import joblib
+import yfinance as yf
+import pandas as pd
 
 app = FastAPI()
 
-# リクエストボディの定義
-class Item(BaseModel):
-    name: str
-    price: float
-    description: str = None
+# サーバー起動時にモデルを一度だけ読み込む
+model = joblib.load("models/btc_prediction_model.pkl")
 
-# 文字列を保存するリクエスト
-class TextData(BaseModel):
-    text: str
-
-# GET エンドポイント
 @app.get("/")
 def read_root():
-    return {"message": "FastAPI へようこそ!"}
+    return {"message": "Bitcoin Prediction API is running!"}
 
-# 文字列を保存するエンドポイント
-@app.post("/save/")
-def save_text(data: TextData):
-    try:
-        # タイムスタンプ付きファイル名を作成
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"saved_text_{timestamp}.txt"
-        
-        # ファイルに保存
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(data.text)
-        
-        return {"status": "成功", "filename": filename, "message": "テキストを保存しました"}
-    except Exception as e:
-        return {"status": "エラー", "message": str(e)}
-
-# # パスパラメータを使うエンドポイント
-# @app.get("/items/{item_id}")
-# def read_item(item_id: int):
-#     return {"item_id": item_id}
-
-# # クエリパラメータを使うエンドポイント
-# @app.get("/users/")
-# def read_users(skip: int = 0, limit: int = 10):
-#     return {"skip": skip, "limit": limit}
-
-# # POST エンドポイント
-# @app.post("/items/")
-# def create_item(item: Item):
-#     return {"name": item.name, "price": item.price, "description": item.description}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/predict")
+def predict_next_day():
+    # 最新データを取得して特徴量を作成
+    data = yf.download("BTC-USD", period="5d", interval="1d")
+    latest_return = data['Close'].pct_change().iloc[-1]
+    latest_ma5 = (data['Close'] / data['Close'].rolling(window=5).mean()).iloc[-1]
+    
+    # 予測
+    features = pd.DataFrame([[latest_return, latest_ma5]], columns=['Return', 'MA5'])
+    prediction = model.predict(features)[0]
+    
+    return {
+        "prediction": "Up" if prediction == 1 else "Down",
+        "confidence_score": 0.85, # 例
+        "timestamp": pd.Timestamp.now().isoformat()
+    }

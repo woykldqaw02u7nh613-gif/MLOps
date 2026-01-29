@@ -1,0 +1,17 @@
+{
+    "ServiceName": "btc-api-service",
+    "SourceConfiguration": {
+        "ImageRepository": {
+            "ImageIdentifier": "387634811521.dkr.ecr.ap-northeast-1.amazonaws.com/btc-api:latest",
+            "ImageConfiguration": {
+                "Port": "8000"
+            },
+            "ImageRepositoryType": "ECR"
+        },
+        "AutoDeploymentsEnabled": false
+    },
+    "InstanceConfiguration": {
+        "Cpu": "0.25 vCPU",
+        "Memory": "0.5 GB"
+    }
+}
