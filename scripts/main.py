@@ -15,7 +15,9 @@ def read_root():
 @app.get("/predict")
 def predict_next_day():
     # 最新データを取得して特徴量を作成
+    print("download start")
     data = yf.download("BTC-USD", period="5d", interval="1d")
+    print("download done")
     latest_return = data['Close'].pct_change().iloc[-1]
     latest_ma5 = (data['Close'] / data['Close'].rolling(window=5).mean()).iloc[-1]
     
