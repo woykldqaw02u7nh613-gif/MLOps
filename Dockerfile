@@ -15,4 +15,4 @@ RUN pip install -r requirements.txt
 
 # 5. APIサーバーの起動（0.0.0.0で公開）
 # CMD ["python"]
-CMD ["uvicorn", "scripts.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "scripts.main:app", "--host", "0.0.0.0", "--port", "10000"]
