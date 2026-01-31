@@ -2,11 +2,13 @@ from fastapi import FastAPI
 import joblib
 import yfinance as yf
 import pandas as pd
+from pathlib import Path
 
 app = FastAPI()
 
 # サーバー起動時にモデルを一度だけ読み込む
-model = joblib.load("models/btc_prediction_model.pkl")
+model_path = Path("models", "btc_prediction_model.pkl")
+model = joblib.load(model_path)
 
 @app.get("/")
 def read_root():

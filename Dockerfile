@@ -6,12 +6,15 @@ WORKDIR /app
 
 # 3. 必要なファイルをコピー
 COPY requirements.txt .
-COPY scripts/main.py scripts/
-COPY models/btc_prediction_model.pkl models/
+# COPY scripts/main.py scripts/
+# COPY models/btc_prediction_model.pkl models/
 
 # 4. ライブラリのインストール
 RUN pip install -r requirements.txt
 # RUN apt-get update && apt-get install -y git
+
+RUN useradd --uid 1000 -m -s /bin/bash mluser
+USER mluser
 
 # 5. APIサーバーの起動（0.0.0.0で公開）
 # CMD ["python"]
