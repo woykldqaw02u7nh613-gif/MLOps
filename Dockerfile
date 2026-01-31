@@ -13,9 +13,11 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 # RUN apt-get update && apt-get install -y git
 
+# 5. ユーザー権限の設定
 RUN useradd --uid 1000 -m -s /bin/bash mluser
+# RUN chown -R mluser:mluser /app
 USER mluser
 
-# 5. APIサーバーの起動（0.0.0.0で公開）
+# 6. APIサーバーの起動（0.0.0.0で公開）
 # CMD ["python"]
 CMD ["uvicorn", "scripts.main:app", "--host", "0.0.0.0", "--port", "10000"]

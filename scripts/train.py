@@ -82,6 +82,10 @@ with mlflow.start_run():
     print(f"精度: {acc}")
 
     # --- モデルそのものを記録 (Artifact) ---
-    mlflow.sklearn.log_model(model, "model")
+    mlflow.sklearn.log_model(
+        sk_model=model, 
+        name="RMC",
+        registered_model_name="RMC_model"
+    )
     
     print("MLflowへの記録が完了しました！")
