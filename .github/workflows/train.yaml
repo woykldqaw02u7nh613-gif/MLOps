@@ -22,4 +22,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run training
-        run: python retrain.py
+        run: python scripts/train.py
