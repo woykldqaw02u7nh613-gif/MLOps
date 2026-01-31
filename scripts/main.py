@@ -3,12 +3,25 @@ import joblib
 import yfinance as yf
 import pandas as pd
 from pathlib import Path
+import mlflow.sklearn
 
-app = FastAPI()
+
+# MLflow設定
+mlflow.set_tracking_uri("http://localhost:5000")
+
+MODEL_NAME = "RMC_model"
+MODEL_STAGE = "Production"
 
 # サーバー起動時にモデルを一度だけ読み込む
-model_path = Path("models", "btc_prediction_model.pkl")
-model = joblib.load(model_path)
+# model_path = Path("models", "btc_prediction_model.pkl")
+# model = joblib.load(model_path)
+# API起動時に1回ロード
+model = mlflow.sklearn.load_model(
+    model_uri=f"models:/{MODEL_NAME}/{MODEL_STAGE}"
+)
+
+
+app = FastAPI()
 
 @app.get("/")
 def read_root():

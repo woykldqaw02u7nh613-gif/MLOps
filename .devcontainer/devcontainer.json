@@ -31,5 +31,9 @@
 	},
 	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
 	// "workspaceFolder": "/app",
-	"remoteUser": "mluser"
+	"remoteUser": "mluser",
+
+	"mounts": [
+		"source=${localEnv:HOME}/.aws,target=/home/mluser/.aws,type=bind,consistency=cached"
+	]
 }

@@ -1,5 +1,6 @@
 import mlflow
 import mlflow.sklearn
+from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -9,6 +10,12 @@ import pandas as pd
 import datetime
 from pathlib import Path
 
+
+# 1. 実験の名前を設定（バラバラにならないように管理）
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_experiment("BTC_Prediction_Project_with_S3")
+model_name = "RMC_model"
+client = MlflowClient()
 
 # --- 1. データ取得 (Data Ingestion) ---
 print("データを取得中...")
@@ -32,37 +39,11 @@ features = ['Return', 'MA5']
 X = df[features]
 y = df['Target']
 
-# --- 3. モデル学習 (Model Training) ---
-print("モデルを学習中...")
 # 時系列データなので shuffle=False (過去データで学習し、未来データでテスト)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
 
-# --- 4. 評価 (Evaluation) ---
-y_pred = model.predict(X_test)
-acc = accuracy_score(y_test, y_pred)
-print(f"モデルの精度: {acc:.2%}")
-
-# --- 5. モデル保存 (Model Storage) ---
-model_filename = Path("models", "btc_prediction_model.pkl")
-# model_filename = Path("models", f"btc_prediction_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl")
-joblib.dump(model, model_filename)
-print(f"モデルを保存しました: {model_filename}")
-
-# --- 6. 予測 (Inference / Prediction) ---
-# 最新（今日）のデータを使って、明日を予測してみる
-latest_data = X.tail(1)
-prediction = model.predict(latest_data)
-result = "上昇 🚀" if prediction[0] == 1 else "下落 📉"
-print(f"【予測】明日のビットコイン価格予測は... {result} です！")
-
-
-# 1. 実験の名前を設定（バラバラにならないように管理）
-mlflow.set_experiment("BTC_Prediction_Project")
-
-with mlflow.start_run():
+with mlflow.start_run() as run:
     # --- パラメータの設定 ---
     n_estimators = 100
     random_state = 42
@@ -71,21 +52,46 @@ with mlflow.start_run():
     mlflow.log_param("n_estimators", n_estimators)
     mlflow.log_param("random_state", random_state)
 
-    # モデル学習（前回のコードの続き）
+
+    # --- 3. モデル学習 (Model Training) ---
+    print("モデルを学習中...")
     model = RandomForestClassifier(n_estimators=n_estimators, random_state=random_state)
     model.fit(X_train, y_train)
 
-    # --- 精度を記録 (Metric) ---
+    # --- 4. 評価 (Evaluation) ---
     y_pred = model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     mlflow.log_metric("accuracy", acc)
-    print(f"精度: {acc}")
+    print(f"モデルの精度: {acc:.2%}")
 
-    # --- モデルそのものを記録 (Artifact) ---
+    # # --- 5. モデル保存 (Model Storage) ---
+    # model_filename = Path("models", "btc_prediction_model.pkl")
+    # # model_filename = Path("models", f"btc_prediction_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl")
+    # joblib.dump(model, model_filename)
+    # print(f"モデルを保存しました: {model_filename}")
+
+    # --- 6. 予測 (Inference / Prediction) ---
+    # 最新（今日）のデータを使って、明日を予測してみる
+    latest_data = X.tail(1)
+    prediction = model.predict(latest_data)
+    result = "上昇 🚀" if prediction[0] == 1 else "下落 📉"
+    print(f"【予測】明日のビットコイン価格予測は... {result} です！")
+
+    # --- mlflowにモデルを記録 (Artifact) ---
     mlflow.sklearn.log_model(
         sk_model=model, 
-        name="RMC",
-        registered_model_name="RMC_model"
+        name="model"
+    )
+    # --- mlflowにモデルを登録 ---
+    result = mlflow.register_model(
+        model_uri=f"runs:/{run.info.run_id}/model",
+        name=model_name
+    )
+    # 最新バージョンをProductionに
+    client.transition_model_version_stage(
+        name=model_name,
+        version=result.version,
+        stage="Production"
     )
     
     print("MLflowへの記録が完了しました！")
