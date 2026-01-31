@@ -2,15 +2,11 @@ name: Daily Retrain
 
 on:
   schedule:
-    - cron: "0 0 * * *"   # UTC 0:00
   workflow_dispatch:     # 手動実行も可能
 
 jobs:
   retrain:
-    runs-on: ubuntu-latest
-
-    # container:
-    #   image: btc-api:latest   
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout repo
