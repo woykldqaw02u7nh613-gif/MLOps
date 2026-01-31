@@ -2,6 +2,7 @@ name: Daily Retrain
 
 on:
   schedule:
+    - cron: "0 0 * * *"   # UTC 0:00
   workflow_dispatch:     # 手動実行も可能
 
 jobs:
